@@ -57,8 +57,15 @@ class Level:
         print('#corridor nodes: '+str(self.corridor_nodes),flush=True)
         print('#corridor starts: '+str(self.corridor_starts),flush=True)
 
-    def get_shortest_path(self,node1,node2):
+    def get_shortest_path(self,node1,node2,start_time=None):
         s_path = nx.dijkstra_path(self.graph,node1,node2)
         return (s_path)
+
+    def get_shortest_time_path(self, coord1, coord2, start_time):
+        s_path = nx.dijkstra_path(self.graph,node1,node2)
+        time = range(start_time, start_time+len(s_path))
+        return list(zip(s_path, time))
+
+
 
    
