@@ -59,6 +59,7 @@ class Planner:
             # TODO Set this correctly so agent is not on top of box
             assigned_plan[0].start_coords = path[0]
             assigned_plan[0].end_coords = path[-1]
+            assigned_plan[0].agent = agent
             agent.plans.append(assigned_plan[0])
                 
     # First we are creating generic plans:
@@ -71,7 +72,7 @@ class Planner:
             if (agent.coords != curr_plan.start_coords):
                 # create new plan to path
                 tempPath = get_shortest_time_path(agent.coords, plan.box.coords, current_time)
-                tempPlan = plan(agent=agent, box=current_plan.box, path=path)
+                tempPlan = plan(agent=agent, box=current_plan.box, path=path, next_plan=current_plan)
                 agent.plans.insert(tempPlan, 0)
                 continue
             # check versus other agents plans and create conflict tuples
@@ -80,6 +81,7 @@ class Planner:
             for otherAgent in otherAgents:
                 for otherPlan in otherAgent.plans:
                     if plan.start_time == None:
+                        # Cant compare to things when we dont know when it starts
                         continue
                     # This is a list of time coordinates that exists in both paths
                     conflict_set = find_conflicts(current_plan.path, otherPlan.path)
@@ -87,6 +89,12 @@ class Planner:
                         # TODO Deal with conflict
                         # TODO alternative path
                         # TODO Waiting on path
+                    elif (len(conflict_set) == 0):
+                        # No conflicts means its all good
+                        non_conflicting_plans.add((current_plan, otherPlan))
+                    else:
+                        # Some other logic here
+                    
                         
 
 
@@ -114,7 +122,16 @@ class Planner:
         #             closest_agent = (agent, len(path), path)
         #     plan.agent, plan.length, plan.path = closest_agent
 
-
+    def get_on_time_path_objects(self, path):
+        tempDict = {}
+        for coords, time in path:
+            for box in self.level.boxes:
+                if coords == box.coords:
+                    tempDict[box] = coords
+            for boxGoal in self.level.goals:
+                if coords == boxGoal.coords:
+                    tempDict[goal] = coords
+        return tempDict
 
 
     def check_unfinished_goals(self):
