@@ -3,8 +3,9 @@ from coords import Coords
 from action import Action,ActionType
 class Planner:
     def __init__(self,level):
+        self.current_time = 0
         self.level = level
-        self.pan = []
+        # self.pan = []
         self.plans=[]
         self.curr_plans=[]
         self.unfinished_goals = level.goals
@@ -14,6 +15,107 @@ class Planner:
         self.curr_goals = []
         self.removed_edges = []
         self.removed_nodes = []
+        self.plan_pool = {}
+        self.approved_plans = {}
+        self.non_conflicting_plans={}
+
+
+    def create_inital_plans(self):
+        # For all goals, create an inital plan to solve from closest box.
+        for goal in self.level.box_goals:
+            if goal.is_done:
+                continue
+            # Get closest box
+            closest_box = (none, 9999)
+            for box in self.level.boxes:
+                if box.name != goal.name:
+                    continue
+                # TODO THIS SHOULD BE PATH ACTUALLY 
+                dist = get_heuristic_dist(box.coords, goal.coords)
+                if dist < closest_box[1]:
+                    closest_box = (box, dist)
+            p = plan(box=box, goal=goal, start_time = current_time)
+            self.plan_pool.append(p)
+
+
+    def plan(self):
+        for agent in self.agents:
+            # Plan, distance, prioirty, path
+            assigned_plan = (None, 9999, 0, None)
+            for plan in self.plan_pool:
+                if (plan.box.color != agent.color):
+                    continue
+                # TODO Set this correctly so agent is not on top of box
+                path = get_shortest_path(agent.coords, plan.box.coords)
+                # Prioritise priority value first
+                if plan.priority > assigned_plan[2]:
+                    assigned_plan = (plan, len(path), plan.priority, path)
+                elif plan.priority == assigned_plan[2]:
+                    if len(path) < assigned_plan[1]:
+                        assigned_plan = (plan, len(path), plan.priority, path)
+                else:
+                    # Plan is less important
+                    continue
+            # TODO Set this correctly so agent is not on top of box
+            assigned_plan[0].start_coords = path[0]
+            assigned_plan[0].end_coords = path[-1]
+            agent.plans.append(assigned_plan[0])
+                
+    # First we are creating generic plans:
+    # E.g. Box -> Goal, no time path is defined yet.
+    # Then we find the shortest time path to that plan
+
+    def generate_move_plans(self):
+        for agent in self.agents:
+            current_plan = agent.plans[0]
+            if (agent.coords != curr_plan.start_coords):
+                # create new plan to path
+                tempPath = get_shortest_time_path(agent.coords, plan.box.coords, current_time)
+                tempPlan = plan(agent=agent, box=current_plan.box, path=path)
+                agent.plans.insert(tempPlan, 0)
+                continue
+            # check versus other agents plans and create conflict tuples
+            otherAgents = self.agents[:]
+            otherAgents.pop(agent)
+            for otherAgent in otherAgents:
+                for otherPlan in otherAgent.plans:
+                    if plan.start_time == None:
+                        continue
+                    # This is a list of time coordinates that exists in both paths
+                    conflict_set = find_conflicts(current_plan.path, otherPlan.path)
+                    if (len(conflict_set) > 0):
+                        # TODO Deal with conflict
+                        # TODO alternative path
+                        # TODO Waiting on path
+                        
+
+
+    def find_conflicts(self, timePath1, timePath2):
+        return set(timePath1).intersection(timePath2)
+
+
+    def assign_paths(self):
+        for agent in self.agents:
+            curr_plan = agent.plans[0]
+            if (agent.coords != curr_plan.start_coords):
+                path = get_shortest_time_path(agent.coords, curr_plan.start_coords)
+                p = plan()
+
+
+
+        # for plan in self.plan_pool:
+        #     # Agent, distance value, path
+        #     closest_agent = (none, 9999, none)
+        #     for agent in self.level.agents:
+        #         if agent.color != plan.box.color:
+        #             continue
+        #         path = get_shortest_path(agent.coords, box.coords)
+        #         if len(dist) > closest_agent[1]:
+        #             closest_agent = (agent, len(path), path)
+        #     plan.agent, plan.length, plan.path = closest_agent
+
+
+
 
     def check_unfinished_goals(self):
         for goal in self.level.box_goals:
@@ -101,7 +203,15 @@ class Planner:
             self.unfinished_goals.remove(goal)
             #print('#Unfinished Goals not found :.'+str(goal.box_name), flush=True)
             goal.agent.add_paths(path) 
-        
+    
+
+    def get_shortest_path(self, coord1, coord2):
+        path = self.level.get_shortest_path(coord1, coord2)
+        return path
+
+    def get_shortest_time_path(self, coord1, coord2, start_time):
+        path = self.level.get_shortest_path(coord1, coord2, start_time)
+        return path
 
     def get_agent_box_path(self,agent_coords,box_coords,goal_coords):
         box_path_g = self.level.get_shortest_path(box_coords,goal_coords)
@@ -130,7 +240,7 @@ class Planner:
                 if box.name == goal.box_name:
                     dist = self.get_heuristic_dist(goal.coords,box.coords)
                     if dist<curr_dist:
-                        curr_box = box
+                        cnurr_box = box
                         curr_dist = dist
         return curr_box
 

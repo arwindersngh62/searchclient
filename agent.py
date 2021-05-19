@@ -17,7 +17,7 @@ class Agent:
         self.is_assigned = False
         self.agent_path = []
         self.box_path = []
-        self.plan = []
+        self.plans = []
 
     def reset_agent(self):
         self.is_assigned =False
