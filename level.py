@@ -8,6 +8,8 @@ class Level:
         self.walls = walls
         self.num_cols = num_cols
         self.num_rows = num_rows
+        #self.goal_coords=[]
+        self.get_goal_coords()
 
     def get_boxes():
         return self.boxes
@@ -23,6 +25,12 @@ class Level:
 
     def get_walls():
         return self.walls
+
+
+    def get_goal_coords(self):
+        self.goal_coords=[]
+        for goal in self.goals:
+            self.goal_coords.append(goal.coords)
 
     def get_next_nodes(self,node):
         return [(node[0],node[1]+1),(node[0]+1,node[1]),(node[0]-1,node[1]),(node[0],node[1]-1)]
@@ -57,7 +65,7 @@ class Level:
         print('#corridor nodes: '+str(self.corridor_nodes),flush=True)
         print('#corridor starts: '+str(self.corridor_starts),flush=True)
 
-    def get_shortest_path(self,node1,node2,start_time=None):
+    def get_shortest_path(self,node1,node2):
         s_path = nx.dijkstra_path(self.graph,node1,node2)
         return (s_path)
 

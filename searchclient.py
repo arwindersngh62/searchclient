@@ -13,10 +13,12 @@ from heuristic import HeuristicAStar, HeuristicWeightedAStar, HeuristicGreedy
 from graphsearch import search
 from agent import Agent
 from coords import Coords
-from goals import BoxGoal,AgentGoal
+from goals import Goal
 from level import Level
 from planner import Planner
 from box import Box
+import networkx as nx
+
 
 class SearchClient:
     @staticmethod
@@ -25,7 +27,7 @@ class SearchClient:
         # Read domain.
         agents = []
         box_sets = []
-        boxGoals = []
+        goals = []
         agentGoals = []
         server_messages.readline() # #domain
         server_messages.readline() # hospital
@@ -76,10 +78,10 @@ class SearchClient:
                     agent_cols[ord(c) - ord('0')] = col
                     num_agents += 1
                     temp_coords = Coords(row,col)
-                    agents.append(Agent(c,Coords(row,col),agent_colors[ord(c) - ord('0')]))
+                    agents.append(Agent(c,(row,col),agent_colors[ord(c) - ord('0')]))
                 elif 'A' <= c <= 'Z':
                     boxes[row][col] = c
-                    box_sets.append(Box(c,box_colors[ord(c) - ord('A')],Coords(row,col)))
+                    box_sets.append(Box(c,box_colors[ord(c) - ord('A')],(row,col)))
                 elif c == '+':
                     walls[row][col] = True
             
@@ -92,13 +94,20 @@ class SearchClient:
         goals = [['' for _ in range(num_cols)] for _ in range(num_rows)]
         line = server_messages.readline()
         row = 0
+
+        goals_set=[]
         while not line.startswith('#'):
             for col, c in enumerate(line):
+                
                 if '0' <= c <= '9':
-                    agentGoals.append(AgentGoal(Coords(row,col),c))
+                    goal = Goal((row,col))
+                    goal.add_agent_name(c)
+                    goals_set.append(goal)    
                     
                 if 'A' <= c <= 'Z':
-                    boxGoals.append(BoxGoal(Coords(row,col),c))
+                    goal = Goal((row,col))
+                    goal.add_box_name(c)
+                    goals_set.append(goal)
             row += 1
             line = server_messages.readline()
         
@@ -106,7 +115,7 @@ class SearchClient:
         # line is currently "#end".
         
         
-        return Level(agents,box_sets,boxGoals,agentGoals,walls,num_cols,num_rows)
+        return Level(agents,box_sets,goals_set,walls,num_cols,num_rows)
 
     
     @staticmethod
@@ -133,15 +142,22 @@ class SearchClient:
         if hasattr(server_messages, "reconfigure"):
             server_messages.reconfigure(encoding='ASCII')
         level = SearchClient.parse_level(server_messages)
-        level.generate_graph()
         print('#Parsing Done.', flush=True)
         # Select search strategy.
         curr_planner = Planner(level)
-        
+        print('#Planner Created.', flush=True)
+        level.generate_graph()
+        print('#Graph Generated.', flush=True)
+
         # Search for a plan.
+        #plan = curr_planner.get_plan()
+        print('#Starting Planner.', flush=True)
         curr_planner.get_plan()
-        plan=None
+        plan = curr_planner.joint_action
+        print(f'#{plan}',flush =True)
+        print('#Planner Finished.', flush=True)
         # Print plan to server.
+        #plan = None
         if plan is None:
             print('Unable to solve level.', file=sys.stderr, flush=True)
             sys.exit(0)
