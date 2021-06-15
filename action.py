@@ -48,7 +48,7 @@ class Action(Enum):
     PullWN = ("Pull(W,N)", ActionType.Pull, 0, -1, -1, 0)
     PullWS= ("Pull(W,S)", ActionType.Pull, 0, -1, 1, 0)
     
-    
+
     def __init__(self, name, type, ard, acd, brd, bcd):
         self.name_ = name
         self.type = type

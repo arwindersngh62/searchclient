@@ -18,12 +18,16 @@ class Goal:
     def finish_agent_goal(self,agent_path):
         self.is_done=True
         self.agent.add_agent_path(agent_path) 
+    
+    def finish(self):
+        self.is_done=True
+        #self.agent.add_agent_path(agent_path) 
 
     def add_box_name(self,name):    
         self.box_name = name
     
     def add_agent_name(self,name):
-        self.agent_name = name
+        self.agentName = name
 
     def reset_goal(self):
         self.has_agent = False
